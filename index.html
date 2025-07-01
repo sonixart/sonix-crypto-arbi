@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Arbitrage Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { background-color: #111; color: #eee; font-family: Arial, sans-serif; padding: 20px; }
+        h1 { text-align: center; color: #66ffcc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #444; }
+        th { background-color: #222; color: #ffcc00; }
+        tr:hover { background-color: #222; }
+        .profit { color: #00ff00; }
+        .loss { color: #ff4444; }
+    </style>
+</head>
+<body>
+    <h1>Crypto Arbitrage Monitor (Binance ↔ Bybit)</h1>
+    <table id="arbitrage-table">
+        <thead>
+            <tr>
+                <th>Pair</th>
+                <th>Binance Price</th>
+                <th>Bybit Price</th>
+                <th>Profit %</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const PAIRS = [
+            'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT', 'ADA/USDT',
+            'DOGE/USDT', 'SOL/USDT', 'LTC/USDT', 'AVAX/USDT', 'LINK/USDT',
+            'MATIC/USDT', 'TRX/USDT', 'DOT/USDT', 'SHIB/USDT', 'ATOM/USDT'
+        ];
+
+        async function fetchBinancePrice(symbol) {
+            let res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + symbol.replace('/', ''));
+            let data = await res.json();
+            return parseFloat(data.price);
+        }
+
+        async function fetchBybitPrice(symbol) {
+            let res = await fetch('https://api.bybit.com/v2/public/tickers?symbol=' + symbol.replace('/', ''));
+            let data = await res.json();
+            return parseFloat(data.result[0].last_price);
+        }
+
+        async function updateTable() {
+            const tbody = document.querySelector('#arbitrage-table tbody');
+            tbody.innerHTML = '';
+            for (let pair of PAIRS) {
+                try {
+                    let [binance, bybit] = await Promise.all([
+                        fetchBinancePrice(pair),
+                        fetchBybitPrice(pair)
+                    ]);
+                    let percent = ((bybit - binance) / binance) * 100;
+                    let row = `<tr>
+                        <td>${pair}</td>
+                        <td>${binance.toFixed(4)}</td>
+                        <td>${bybit.toFixed(4)}</td>
+                        <td class="${percent >= 1.1 ? 'profit' : 'loss'}">${percent.toFixed(2)}%</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                } catch (e) {
+                    console.error('Error loading pair:', pair, e);
+                }
+            }
+        }
+
+        updateTable();
+        setInterval(updateTable, 30000);
+    </script>
+</body>
+</html>
