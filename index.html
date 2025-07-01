@@ -37,14 +37,18 @@
             'MATIC/USDT', 'TRX/USDT', 'DOT/USDT', 'SHIB/USDT', 'ATOM/USDT'
         ];
 
+        const proxy = 'https://corsproxy.io/?';
+
         async function fetchBinancePrice(symbol) {
-            let res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + symbol.replace('/', ''));
+            let url = proxy + 'https://api.binance.com/api/v3/ticker/price?symbol=' + symbol.replace('/', '');
+            let res = await fetch(url);
             let data = await res.json();
             return parseFloat(data.price);
         }
 
         async function fetchBybitPrice(symbol) {
-            let res = await fetch('https://api.bybit.com/v2/public/tickers?symbol=' + symbol.replace('/', ''));
+            let url = proxy + 'https://api.bybit.com/v2/public/tickers?symbol=' + symbol.replace('/', '');
+            let res = await fetch(url);
             let data = await res.json();
             return parseFloat(data.result[0].last_price);
         }
